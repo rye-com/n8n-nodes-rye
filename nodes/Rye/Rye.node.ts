@@ -1,4 +1,4 @@
-import { NodeConnectionType, type INodeType, type INodeTypeDescription } from 'n8n-workflow';
+import { NodeConnectionTypes, type INodeType, type INodeTypeDescription } from 'n8n-workflow';
 
 export class Rye implements INodeType {
 	description: INodeTypeDescription = {
@@ -13,8 +13,8 @@ export class Rye implements INodeType {
 			name: 'Rye',
 		},
 		usableAsTool: true,
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'ryeApi',
