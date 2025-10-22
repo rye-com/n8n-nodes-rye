@@ -9,6 +9,7 @@ import {
 	sleep,
 } from 'n8n-workflow';
 
+import type { Buyer, CreateCheckoutIntentRequestBody, GetCheckoutIntentResponse } from './types';
 import {
 	checkoutIntentOperations,
 	checkoutIntentFields,
@@ -90,22 +91,10 @@ export class Rye implements INodeType {
 				if (resource === 'checkoutIntent') {
 					if (operation === 'create') {
 						const productUrl = this.getNodeParameter('productUrl', i) as string;
-						const buyerEmail = this.getNodeParameter('buyerEmail', i) as string;
-						const shippingAddress = this.getNodeParameter('shippingAddress', i) as {
-							address: {
-								firstName: string;
-								lastName: string;
-								address1: string;
-								address2?: string;
-								city: string;
-								provinceCode: string;
-								postalCode: string;
-								countryCode: string;
-								phone?: string;
-							};
-						};
+						const quantity = this.getNodeParameter('itemQuantity', i) as number;
+						const buyer = this.getNodeParameter('buyer', i) as Buyer;
 
-						if (shippingAddress.address.countryCode.toLowerCase() !== 'us') {
+						if (buyer.country.toLowerCase() !== 'us') {
 							throw new NodeOperationError(
 								this.getNode(),
 								'Only US addresses are currently supported. Please refer to the documentation: https://docs.rye.com/api-v2/example-flows/simple-checkout#step-3%3A-create-a-checkout-intent',
@@ -115,11 +104,9 @@ export class Rye implements INodeType {
 
 						const body = {
 							productUrl,
-							buyer: {
-								email: buyerEmail,
-							},
-							shippingAddress: shippingAddress.address,
-						};
+							buyer,
+							quantity,
+						} satisfies CreateCheckoutIntentRequestBody;
 
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
@@ -136,15 +123,14 @@ export class Rye implements INodeType {
 						const checkoutIntentId = this.getNodeParameter('checkoutIntentId', i) as string;
 						const enablePolling = this.getNodeParameter('enablePolling', i) as boolean;
 
+						const fetchCheckoutIntent = async (): Promise<GetCheckoutIntentResponse> =>
+							await this.helpers.httpRequestWithAuthentication.call(this, 'ryeApi', {
+								method: 'GET',
+								url: `/checkout-intents/${checkoutIntentId}`,
+							});
+
 						if (!enablePolling) {
-							const responseData = await this.helpers.httpRequestWithAuthentication.call(
-								this,
-								'ryeApi',
-								{
-									method: 'GET',
-									url: `/checkout-intents/${checkoutIntentId}`,
-								},
-							);
+							const responseData = await fetchCheckoutIntent();
 
 							returnData.push({ json: responseData });
 						} else {
@@ -155,16 +141,9 @@ export class Rye implements INodeType {
 							let responseData;
 
 							while (attempt < maxAttempts) {
-								responseData = await this.helpers.httpRequestWithAuthentication.call(
-									this,
-									'ryeApi',
-									{
-										method: 'GET',
-										url: `/checkout-intents/${checkoutIntentId}`,
-									},
-								);
+								responseData = await fetchCheckoutIntent();
 
-								const state = (responseData as { state?: string }).state;
+								const state = responseData.state;
 								if (
 									state === 'awaiting_confirmation' ||
 									state === 'completed' ||
@@ -179,7 +158,7 @@ export class Rye implements INodeType {
 								}
 							}
 
-							returnData.push({ json: responseData });
+							returnData.push({ json: responseData ?? {} });
 						}
 					} else if (operation === 'confirm') {
 						const checkoutIntentId = this.getNodeParameter('checkoutIntentId', i) as string;

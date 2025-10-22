@@ -63,22 +63,20 @@ export const checkoutIntentFields: INodeProperties[] = [
 		placeholder: 'https://www.amazon.com/Apple-MX532LL-A-AirTag/dp/B0CWXNS552',
 	},
 	{
-		displayName: 'Buyer Email',
-		name: 'buyerEmail',
-		type: 'string',
-		required: true,
+		displayName: 'Item Quantity',
+		name: 'itemQuantity',
+		type: 'number',
+		default: 1,
 		displayOptions: {
 			show: {
 				resource: ['checkoutIntent'],
 				operation: ['create'],
 			},
 		},
-		default: '',
-		description: 'Email address of the buyer',
 	},
 	{
-		displayName: 'Shipping Address',
-		name: 'shippingAddress',
+		displayName: 'Buyer Details',
+		name: 'buyer',
 		type: 'fixedCollection',
 		required: true,
 		displayOptions: {
@@ -88,7 +86,7 @@ export const checkoutIntentFields: INodeProperties[] = [
 			},
 		},
 		default: {},
-		description: 'Shipping address for the order (US only)',
+		description: 'Buyer details for the order (US only)',
 		options: [
 			{
 				name: 'address',
@@ -105,6 +103,14 @@ export const checkoutIntentFields: INodeProperties[] = [
 						displayName: 'Last Name',
 						name: 'lastName',
 						type: 'string',
+						required: true,
+						default: '',
+					},
+					{
+						displayName: 'Email Address',
+						name: 'email',
+						type: 'string',
+						placeholder: 'name@email.com',
 						required: true,
 						default: '',
 					},
@@ -130,7 +136,7 @@ export const checkoutIntentFields: INodeProperties[] = [
 					},
 					{
 						displayName: 'State',
-						name: 'provinceCode',
+						name: 'province',
 						type: 'string',
 						required: true,
 						default: '',
@@ -145,7 +151,7 @@ export const checkoutIntentFields: INodeProperties[] = [
 					},
 					{
 						displayName: 'Country Code',
-						name: 'countryCode',
+						name: 'country',
 						type: 'string',
 						required: true,
 						default: 'US',
