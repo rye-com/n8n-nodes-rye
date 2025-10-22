@@ -9,6 +9,8 @@ import {
 	sleep,
 } from 'n8n-workflow';
 
+const TERMINAL_STATES = ['awaiting_confirmation', 'completed', 'failed'] as const;
+
 export class Rye implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Rye',
@@ -33,7 +35,7 @@ export class Rye implements INodeType {
 		hints: [
 			{
 				message:
-					'Tip: When using "Get Status" with polling enabled, add a Switch or IF node after this node to route your workflow based on the final checkout status (completed, failed, cancelled).',
+					'Tip: When using "Get Status" with polling enabled, add a Switch or IF node after this node to route your workflow based on the final checkout status (awaiting_confirmation, completed, failed).',
 				whenToDisplay: 'afterExecution',
 				location: 'outputPane',
 				displayCondition:
@@ -275,7 +277,7 @@ export class Rye implements INodeType {
 				},
 				default: true,
 				description:
-					'Whether to automatically poll until the checkout reaches a terminal state (completed, failed, or cancelled). When enabled, the node will retry up to the maximum attempts specified below.',
+					'Whether to automatically poll until the checkout reaches a terminal state (awaiting_confirmation, completed, or failed). When enabled, the node will retry up to the maximum attempts specified below.',
 			},
 			{
 				displayName: 'Max Attempts',
@@ -429,8 +431,8 @@ export class Rye implements INodeType {
 									},
 								);
 
-								const status = (responseData as { status?: string }).status;
-								if (status === 'completed' || status === 'failed' || status === 'cancelled') {
+								const state = (responseData as { state?: string }).state;
+								if (state && TERMINAL_STATES.some((terminalState) => state === terminalState)) {
 									break;
 								}
 

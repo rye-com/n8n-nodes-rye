@@ -76,9 +76,9 @@ The "Get Status" operation includes automatic polling functionality to wait for 
 
 **Terminal States:**
 
+- `awaiting_confirmation` - Checkout is awaiting confirmation
 - `completed` - Checkout successfully completed
 - `failed` - Checkout failed
-- `cancelled` - Checkout was cancelled
 
 **Best Practice**: After polling completes, use a **Switch** or **IF** node to route your workflow based on the final status.
 
@@ -100,9 +100,8 @@ Create Checkout Intent (Rye)
 Get Status with Polling (Rye)
   ↓
 Switch (based on status)
-  ├─ awaiting_confirmation → Confirm Checkout (Rye) → Success notification
-  ├─ failed → Error notification
-  └─ cancelled → Cancelled notification
+  ├─ awaiting_confirmation → Confirm Checkout (Rye) → completed → Success notification
+  └─ failed → Error notification
 ```
 
 ### Step-by-Step Configuration
@@ -135,8 +134,8 @@ Switch (based on status)
 Configure switch rules:
 
 - **Rule 1**: `{{ $json.status === "awaiting_confirmation" }}` → Confirm branch
-- **Rule 2**: `{{ $json.status === "failed" }}` → Error handling
-- **Rule 3**: `{{ $json.status === "cancelled" }}` → Cancelled handling
+- **Rule 2**: `{{ $json.status === "completed" }}` → Completed handling
+- **Rule 3**: `{{ $json.status === "failed" }}` → Error handling
 
 #### 5. Confirm Checkout (if awaiting_confirmation)
 
