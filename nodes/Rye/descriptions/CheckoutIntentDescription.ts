@@ -1,4 +1,4 @@
-import { type INodeProperties } from 'n8n-workflow';
+import { type INodeProperties, type NodeHint } from 'n8n-workflow';
 
 export const checkoutIntentOperations: INodeProperties[] = [
 	{
@@ -46,6 +46,17 @@ export const checkoutIntentOperations: INodeProperties[] = [
 	},
 ];
 
+export const checkoutIntentHints: NodeHint[] = [
+	{
+		message:
+			'Tip: When using this node with polling enabled, add a Switch or IF node after this node to route your workflow based on the final checkout status (retrieving_offer, awaiting_confirmation, completed, failed).',
+		whenToDisplay: 'always',
+		location: 'outputPane',
+		displayCondition:
+			'={{ $parameter["operation"] === "getStatus" && $parameter["enablePolling"] === true }}',
+	},
+];
+
 export const checkoutIntentFields: INodeProperties[] = [
 	{
 		displayName: 'Product URL',
@@ -89,31 +100,9 @@ export const checkoutIntentFields: INodeProperties[] = [
 		description: 'Buyer details for the order (US only)',
 		options: [
 			{
-				name: 'address',
-				displayName: 'Address',
+				name: 'details',
+				displayName: 'Details',
 				values: [
-					{
-						displayName: 'First Name',
-						name: 'firstName',
-						type: 'string',
-						required: true,
-						default: '',
-					},
-					{
-						displayName: 'Last Name',
-						name: 'lastName',
-						type: 'string',
-						required: true,
-						default: '',
-					},
-					{
-						displayName: 'Email Address',
-						name: 'email',
-						type: 'string',
-						placeholder: 'name@email.com',
-						required: true,
-						default: '',
-					},
 					{
 						displayName: 'Address Line 1',
 						name: 'address1',
@@ -135,21 +124,6 @@ export const checkoutIntentFields: INodeProperties[] = [
 						default: '',
 					},
 					{
-						displayName: 'State',
-						name: 'province',
-						type: 'string',
-						required: true,
-						default: '',
-						description: 'Two-letter state code (e.g., CA, NY)',
-					},
-					{
-						displayName: 'ZIP Code',
-						name: 'postalCode',
-						type: 'string',
-						required: true,
-						default: '',
-					},
-					{
 						displayName: 'Country Code',
 						name: 'country',
 						type: 'string',
@@ -158,10 +132,47 @@ export const checkoutIntentFields: INodeProperties[] = [
 						description: 'Two-letter country code (currently only US supported)',
 					},
 					{
+						displayName: 'Email Address',
+						name: 'email',
+						type: 'string',
+						placeholder: 'name@email.com',
+						required: true,
+						default: '',
+					},
+					{
+						displayName: 'First Name',
+						name: 'firstName',
+						type: 'string',
+						required: true,
+						default: '',
+					},
+					{
+						displayName: 'Last Name',
+						name: 'lastName',
+						type: 'string',
+						required: true,
+						default: '',
+					},
+					{
 						displayName: 'Phone',
 						name: 'phone',
 						type: 'string',
 						default: '',
+					},
+					{
+						displayName: 'Postal Code',
+						name: 'postalCode',
+						type: 'string',
+						required: true,
+						default: '',
+					},
+					{
+						displayName: 'Province',
+						name: 'province',
+						type: 'string',
+						required: true,
+						default: '',
+						description: 'Two-letter state code (e.g., CA, NY)',
 					},
 				],
 			},

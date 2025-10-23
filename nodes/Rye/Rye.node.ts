@@ -13,6 +13,7 @@ import type { Buyer, CreateCheckoutIntentRequestBody, GetCheckoutIntentResponse 
 import {
 	checkoutIntentOperations,
 	checkoutIntentFields,
+	checkoutIntentHints,
 	brandOperations,
 	brandFields,
 } from './descriptions';
@@ -38,16 +39,7 @@ export class Rye implements INodeType {
 				required: true,
 			},
 		],
-		hints: [
-			{
-				message:
-					'Tip: When using "Get Status" with polling enabled, add a Switch or IF node after this node to route your workflow based on the final checkout status (awaiting_confirmation, completed, failed).',
-				whenToDisplay: 'afterExecution',
-				location: 'outputPane',
-				displayCondition:
-					'={{ $parameter["operation"] === "getStatus" && $parameter["enablePolling"] === true }}',
-			},
-		],
+		hints: [...checkoutIntentHints],
 		requestDefaults: {
 			baseURL: '={{$credentials.apiUrl}}',
 			headers: {
@@ -82,9 +74,13 @@ export class Rye implements INodeType {
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
-		const returnData: INodeExecutionData[] = [];
 		const resource = this.getNodeParameter('resource', 0) as string;
 		const operation = this.getNodeParameter('operation', 0) as string;
+
+		const credentials = await this.getCredentials('ryeApi', 0);
+		const apiUrl = credentials.apiUrl;
+
+		const returnData: INodeExecutionData[] = [];
 
 		for (let i = 0; i < items.length; i++) {
 			try {
@@ -92,9 +88,9 @@ export class Rye implements INodeType {
 					if (operation === 'create') {
 						const productUrl = this.getNodeParameter('productUrl', i) as string;
 						const quantity = this.getNodeParameter('itemQuantity', i) as number;
-						const buyer = this.getNodeParameter('buyer', i) as Buyer;
+						const buyer = this.getNodeParameter('buyer', i) as { details: Buyer };
 
-						if (buyer.country.toLowerCase() !== 'us') {
+						if (buyer.details.country.toLowerCase() !== 'us') {
 							throw new NodeOperationError(
 								this.getNode(),
 								'Only US addresses are currently supported. Please refer to the documentation: https://docs.rye.com/api-v2/example-flows/simple-checkout#step-3%3A-create-a-checkout-intent',
@@ -104,7 +100,7 @@ export class Rye implements INodeType {
 
 						const body = {
 							productUrl,
-							buyer,
+							buyer: buyer.details,
 							quantity,
 						} satisfies CreateCheckoutIntentRequestBody;
 
@@ -113,7 +109,7 @@ export class Rye implements INodeType {
 							'ryeApi',
 							{
 								method: 'POST',
-								url: '/checkout-intents',
+								url: `${apiUrl}/checkout-intents`,
 								body,
 							},
 						);
@@ -126,7 +122,7 @@ export class Rye implements INodeType {
 						const fetchCheckoutIntent = async (): Promise<GetCheckoutIntentResponse> =>
 							await this.helpers.httpRequestWithAuthentication.call(this, 'ryeApi', {
 								method: 'GET',
-								url: `/checkout-intents/${checkoutIntentId}`,
+								url: `${apiUrl}/checkout-intents/${checkoutIntentId}`,
 							});
 
 						if (!enablePolling) {
@@ -166,7 +162,8 @@ export class Rye implements INodeType {
 
 						const body = {
 							paymentMethod: {
-								token: stripeToken,
+								type: 'stripe_token',
+								stripeToken,
 							},
 						};
 
@@ -175,7 +172,7 @@ export class Rye implements INodeType {
 							'ryeApi',
 							{
 								method: 'POST',
-								url: `/checkout-intents/${checkoutIntentId}/confirm`,
+								url: `${apiUrl}/checkout-intents/${checkoutIntentId}/confirm`,
 								body,
 							},
 						);
@@ -191,7 +188,7 @@ export class Rye implements INodeType {
 							'ryeApi',
 							{
 								method: 'GET',
-								url: `/brands/domain/${domain}`,
+								url: `${apiUrl}/brands/domain/${domain}`,
 							},
 						);
 
