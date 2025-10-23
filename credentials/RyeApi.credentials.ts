@@ -44,14 +44,8 @@ export class RyeApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: '{{$credentials.apiUrl}}',
-			/**
-			 * n8n uses this to test the provided credentials
-			 * @see: https://docs.n8n.io/integrations/creating-nodes/build/reference/credentials-files/#test
-			 *
-			 * @todo: update this to a suitable auth protected endpoint
-			 */
-			url: '/health',
+			baseURL: '={{$credentials.apiUrl}}',
+			url: '/brands/domain/amazon.com',
 		},
 	};
 }
