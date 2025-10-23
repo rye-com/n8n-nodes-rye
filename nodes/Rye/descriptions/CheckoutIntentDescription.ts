@@ -209,6 +209,33 @@ export const checkoutIntentFields: INodeProperties[] = [
 			'Whether to automatically poll until the checkout reaches a terminal state (awaiting_confirmation, completed, or failed). When enabled, the node will retry up to the maximum attempts specified below.',
 	},
 	{
+		displayName: 'Backoff Strategy',
+		name: 'backoffStrategy',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['checkoutIntent'],
+				operation: ['getStatus'],
+				enablePolling: [true],
+			},
+		},
+		options: [
+			{
+				name: 'Fixed Interval',
+				value: 'fixed',
+				description: 'Wait the same amount of time between each attempt',
+			},
+			{
+				name: 'Exponential Backoff',
+				value: 'exponential',
+				description:
+					'Gradually increase wait time between attempts (recommended for rate-limited APIs)',
+			},
+		],
+		default: 'exponential',
+		description: 'Strategy for spacing out polling attempts',
+	},
+	{
 		displayName: 'Max Attempts',
 		name: 'maxAttempts',
 		type: 'number',
@@ -232,11 +259,43 @@ export const checkoutIntentFields: INodeProperties[] = [
 				resource: ['checkoutIntent'],
 				operation: ['getStatus'],
 				enablePolling: [true],
+				backoffStrategy: ['fixed'],
 			},
 		},
 		default: 5,
 		description:
 			'Number of seconds to wait between each polling attempt. For example, with 10 max attempts and 5 second intervals, polling will occur for up to 50 seconds total.',
+	},
+	{
+		displayName: 'Initial Interval (Seconds)',
+		name: 'initialIntervalSeconds',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['checkoutIntent'],
+				operation: ['getStatus'],
+				enablePolling: [true],
+				backoffStrategy: ['exponential'],
+			},
+		},
+		default: 5,
+		description: 'Starting wait time in seconds. This will double with each subsequent attempt.',
+	},
+	{
+		displayName: 'Max Interval (Seconds)',
+		name: 'maxIntervalSeconds',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['checkoutIntent'],
+				operation: ['getStatus'],
+				enablePolling: [true],
+				backoffStrategy: ['exponential'],
+			},
+		},
+		default: 60,
+		description:
+			'Maximum wait time in seconds between attempts. The interval will not exceed this value.',
 	},
 	{
 		displayName: 'Stripe Token',

@@ -77,8 +77,17 @@ The "Get Status" operation includes automatic polling functionality to wait for 
 #### Polling Parameters
 
 - **Enable Polling**: When enabled, the node automatically retries checking the status
+- **Backoff Strategy**: Choose between fixed interval or exponential backoff (default: exponential)
 - **Max Attempts**: Number of times to check (default: 10)
+
+**For Fixed Interval Strategy:**
+
 - **Interval (Seconds)**: Time between checks (default: 5 seconds)
+
+**For Exponential Backoff Strategy (Recommended):**
+
+- **Initial Interval (Seconds)**: Starting wait time (default: 5 seconds)
+- **Max Interval (Seconds)**: Maximum wait time cap (default: 60 seconds)
 
 #### Checkout States
 
@@ -93,6 +102,26 @@ The "Get Status" operation includes automatic polling functionality to wait for 
 - `retrieving_offer` - Initial state after creating a checkout intent; Rye is retrieving the offer from the merchant
 
 > **💡 Tip**: If polling times out in the `retrieving_offer` state, increase the **Max Attempts** value or handle this state explicitly in your workflow.
+
+#### Backoff Strategy
+
+Choose how the node spaces out polling attempts:
+
+**Exponential Backoff** (default, recommended):
+
+- Gradually increases wait time between attempts, starting at `initialIntervalSeconds` and doubling up to a maximum of `maxIntervalSeconds` 
+- Example timing: Wait 5s → 10s → 20s → 40s → 60s → 60s...
+
+**Fixed Interval**:
+
+- Waits the same amount of time between each attempt
+- Example timing: Wait 5s → 5s → 5s → 5s...
+
+**Why use exponential backoff?**
+
+- ✅ Automatically adapts to longer processing times
+- ✅ Minimizes risk of hitting rate limits
+- ✅ More efficient for workflows with varying processing times
 
 #### Best Practice
 

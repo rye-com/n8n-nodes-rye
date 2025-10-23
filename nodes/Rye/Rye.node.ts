@@ -131,7 +131,20 @@ export class Rye implements INodeType {
 							returnData.push({ json: responseData });
 						} else {
 							const maxAttempts = this.getNodeParameter('maxAttempts', i) as number;
-							const intervalSeconds = this.getNodeParameter('intervalSeconds', i) as number;
+							const backoffStrategy = this.getNodeParameter('backoffStrategy', i) as string;
+
+							let currentIntervalSeconds: number;
+							let maxIntervalSeconds = 0;
+
+							if (backoffStrategy === 'exponential') {
+								currentIntervalSeconds = this.getNodeParameter(
+									'initialIntervalSeconds',
+									i,
+								) as number;
+								maxIntervalSeconds = this.getNodeParameter('maxIntervalSeconds', i) as number;
+							} else {
+								currentIntervalSeconds = this.getNodeParameter('intervalSeconds', i) as number;
+							}
 
 							let attempt = 0;
 							let responseData;
@@ -150,7 +163,14 @@ export class Rye implements INodeType {
 
 								attempt++;
 								if (attempt < maxAttempts) {
-									await sleep(intervalSeconds * 1000);
+									await sleep(currentIntervalSeconds * 1000);
+
+									if (backoffStrategy === 'exponential') {
+										currentIntervalSeconds = Math.min(
+											currentIntervalSeconds * 2,
+											maxIntervalSeconds,
+										);
+									}
 								}
 							}
 
