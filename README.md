@@ -1,18 +1,21 @@
 # n8n-nodes-rye
 
-This is an n8n community node. It lets you use the Rye Universal Checkout API in your n8n workflows.
+This is an n8n community node that lets you use the Rye Universal Checkout API in your n8n workflows.
 
 The Rye Universal Checkout API turns any product URL into a completed checkout. Instantly retrieve price, tax, and shipping for any product, and let users buy without ever leaving your native AI experience.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/sustainable-use-license/) workflow automation platform.
 
-[Installation](#installation)  
-[Operations](#operations)  
-[Credentials](#credentials)  
-[Compatibility](#compatibility)  
-[Usage](#usage)  
-[Example Workflows](#example-workflows)  
-[Resources](#resources)
+**Table of Contents**
+
+- [Installation](#installation)
+- [Operations](#operations)
+- [Credentials](#credentials)
+- [Compatibility](#compatibility)
+- [Usage](#usage)
+- [Example Workflows](#example-workflows)
+- [Resources](#resources)
+- [Support](#support)
 
 ## Installation
 
@@ -43,48 +46,61 @@ To use this node, you need a Rye API account and access token.
 
 ### Setting up credentials in n8n
 
-1. In n8n, go to **Credentials** > **New**
+1. In n8n, go to **Credentials** → **New**
 2. Search for "Rye API"
-3. Enter your **API URL** (staging: `https://staging.api.rye.com/api/v1` or production: `https://api.rye.com/api/v1`)
+3. Enter your **API URL**:
+   - Staging: `https://staging.api.rye.com/api/v1`
+   - Production: `https://api.rye.com/api/v1`
 4. Enter your **Access Token**
 5. Click **Save**
 
 ## Compatibility
 
-- Minimum n8n version: 1.0.0
-- Tested against: n8n 1.x
+- **Minimum n8n version**: 1.0.0
+- **Tested against**: n8n 1.115.3
 
 ## Usage
 
 ### Basic Checkout Flow
 
-The typical checkout flow involves three steps:
+The typical checkout flow involves these steps:
 
-1. **Create a Checkout Intent** with a product URL and shipping address
-2. **Poll for Status** until the checkout is ready (status: `awaiting_confirmation`)
+1. **Create a Checkout Intent** with a product URL and buyer details
+2. **Poll for Status** until the checkout reaches `awaiting_confirmation` state
 3. **Confirm the Checkout** with a payment token
+4. **Poll for Status** again until the checkout reaches `completed` state
 
 ### Using the Get Status Operation with Polling
 
-The "Get Status" operation includes automatic polling functionality to wait for the checkout to reach a terminal state:
+The "Get Status" operation includes automatic polling functionality to wait for the checkout to reach a terminal state.
 
-**Polling Parameters:**
+#### Polling Parameters
 
-- **Enable Polling**: When enabled, the node will automatically retry checking the status
+- **Enable Polling**: When enabled, the node automatically retries checking the status
 - **Max Attempts**: Number of times to check (default: 10)
 - **Interval (Seconds)**: Time between checks (default: 5 seconds)
 
-**Terminal States:**
+#### Checkout States
 
-- `awaiting_confirmation` - Checkout is awaiting confirmation
+**Terminal States** (polling stops automatically):
+
+- `awaiting_confirmation` - Checkout is ready and awaiting payment confirmation
 - `completed` - Checkout successfully completed
 - `failed` - Checkout failed
 
-**Best Practice**: After polling completes, use a **Switch** or **IF** node to route your workflow based on the final status.
+**Processing States** (polling continues):
+
+- `retrieving_offer` - Initial state after creating a checkout intent; Rye is retrieving the offer from the merchant
+
+> **💡 Tip**: If polling times out in the `retrieving_offer` state, increase the **Max Attempts** value or handle this state explicitly in your workflow.
+
+#### Best Practice
+
+After polling completes, use a **Switch** or **IF** node to route your workflow based on the final status.
 
 ### Address Validation
 
-⚠️ **Important**: The Rye API currently only supports US addresses. The node will validate this and throw an error if a non-US country code is provided.
+> **⚠️ Important**: The Rye API currently only supports US addresses. The node will validate this and throw an error if a non-US country code is provided.
 
 ## Example Workflows
 
@@ -100,7 +116,14 @@ Create Checkout Intent (Rye)
 Get Status with Polling (Rye)
   ↓
 Switch (based on status)
-  ├─ awaiting_confirmation → Confirm Checkout (Rye) → completed → Success notification
+  ├─ awaiting_confirmation → Confirm Checkout (Rye)
+  │                            ↓
+  │                         Get Status with Polling (Rye)
+  │                            ↓
+  │                         Switch (based on final status)
+  │                            ├─ completed → Success notification
+  │                            └─ failed → Error notification
+  │
   └─ failed → Error notification
 ```
 
@@ -110,39 +133,54 @@ Switch (based on status)
 
 - **Resource**: Brand
 - **Operation**: Verify Support
-- **Domain**: `amazon.com` (or your target merchant)
+- **Domain**: `amazon.com` (or your target merchant domain)
 
 #### 2. Create Checkout Intent
 
 - **Resource**: Checkout Intent
 - **Operation**: Create
-- **Product URL**: The product you want to purchase
-- **Buyer Email**: Customer's email
-- **Shipping Address**: Complete US address
+- **Product URL**: Full URL of the product to purchase
+- **Buyer Email**: Customer's email address
+- **Shipping Address**: Complete US address details
 
-#### 3. Get Status (with Polling)
+#### 3. Get Status (with Polling) - First Check
 
 - **Resource**: Checkout Intent
 - **Operation**: Get Status
 - **Checkout Intent ID**: `{{ $json.id }}` (from Create step)
 - **Enable Polling**: `true`
 - **Max Attempts**: `10`
-- **Interval**: `5` seconds
+- **Interval (Seconds)**: `5`
 
-#### 4. Switch Node (Route Based on Status)
+#### 4. Switch Node - Route Based on Initial Status
 
 Configure switch rules:
 
-- **Rule 1**: `{{ $json.status === "awaiting_confirmation" }}` → Confirm branch
-- **Rule 2**: `{{ $json.status === "completed" }}` → Completed handling
-- **Rule 3**: `{{ $json.status === "failed" }}` → Error handling
+- **Rule 1**: `{{ $json.status === "awaiting_confirmation" }}` → Continue to Confirm
+- **Rule 2**: `{{ $json.status === "failed" }}` → Error handling
 
 #### 5. Confirm Checkout (if awaiting_confirmation)
 
 - **Resource**: Checkout Intent
 - **Operation**: Confirm
 - **Checkout Intent ID**: `{{ $('Get Status').item.json.id }}`
-- **Payment Token**: Your payment method token (e.g., from Stripe)
+- **Payment Token**: Payment method token from your payment processor (e.g., Stripe)
+
+#### 6. Get Status (with Polling) - Final Check
+
+- **Resource**: Checkout Intent
+- **Operation**: Get Status
+- **Checkout Intent ID**: `{{ $('Confirm Checkout').item.json.id }}`
+- **Enable Polling**: `true`
+- **Max Attempts**: `10`
+- **Interval (Seconds)**: `5`
+
+#### 7. Switch Node - Route Based on Final Status
+
+Configure switch rules:
+
+- **Rule 1**: `{{ $json.status === "completed" }}` → Success handling
+- **Rule 2**: `{{ $json.status === "failed" }}` → Error handling
 
 ## Resources
 
@@ -157,3 +195,7 @@ For issues or questions:
 - **Node Issues**: [GitHub Issues](https://github.com/rye-com/n8n-nodes-rye/issues)
 - **Rye API Support**: [Rye Support](https://rye.com/support)
 - **n8n Community**: [n8n Forum](https://community.n8n.io/)
+
+## License
+
+[MIT](LICENSE.md)
