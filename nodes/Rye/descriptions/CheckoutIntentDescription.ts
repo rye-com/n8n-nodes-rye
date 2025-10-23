@@ -209,33 +209,6 @@ export const checkoutIntentFields: INodeProperties[] = [
 			'Whether to automatically poll until the checkout reaches a terminal state (awaiting_confirmation, completed, or failed). When enabled, the node will retry up to the maximum attempts specified below.',
 	},
 	{
-		displayName: 'Backoff Strategy',
-		name: 'backoffStrategy',
-		type: 'options',
-		displayOptions: {
-			show: {
-				resource: ['checkoutIntent'],
-				operation: ['getStatus'],
-				enablePolling: [true],
-			},
-		},
-		options: [
-			{
-				name: 'Fixed Interval',
-				value: 'fixed',
-				description: 'Wait the same amount of time between each attempt',
-			},
-			{
-				name: 'Exponential Backoff',
-				value: 'exponential',
-				description:
-					'Gradually increase wait time between attempts (recommended for rate-limited APIs)',
-			},
-		],
-		default: 'exponential',
-		description: 'Strategy for spacing out polling attempts',
-	},
-	{
 		displayName: 'Max Attempts',
 		name: 'maxAttempts',
 		type: 'number',
@@ -246,25 +219,9 @@ export const checkoutIntentFields: INodeProperties[] = [
 				enablePolling: [true],
 			},
 		},
-		default: 10,
+		default: 20,
 		description:
-			'Maximum number of times to check the status before returning the current state. If the terminal state is not reached within this limit, the last known status will be returned.',
-	},
-	{
-		displayName: 'Interval (Seconds)',
-		name: 'intervalSeconds',
-		type: 'number',
-		displayOptions: {
-			show: {
-				resource: ['checkoutIntent'],
-				operation: ['getStatus'],
-				enablePolling: [true],
-				backoffStrategy: ['fixed'],
-			},
-		},
-		default: 5,
-		description:
-			'Number of seconds to wait between each polling attempt. For example, with 10 max attempts and 5 second intervals, polling will occur for up to 50 seconds total.',
+			'Maximum number of times to check the status before returning the current state. Polling stops automatically when a terminal state is reached (awaiting_confirmation, completed, or failed). Note: it can take up to 45 minutes to process the checkout intent - increase this value if needed. <a href="https://docs.rye.com/api-v2/checkout-intent-lifecycle#notes" target="_blank">Learn more</a>',
 	},
 	{
 		displayName: 'Initial Interval (Seconds)',
@@ -275,11 +232,11 @@ export const checkoutIntentFields: INodeProperties[] = [
 				resource: ['checkoutIntent'],
 				operation: ['getStatus'],
 				enablePolling: [true],
-				backoffStrategy: ['exponential'],
 			},
 		},
 		default: 5,
-		description: 'Starting wait time in seconds. This will double with each subsequent attempt.',
+		description:
+			'Starting wait time in seconds. This will double with each subsequent attempt. Set this equal to Max Interval for fixed interval polling.',
 	},
 	{
 		displayName: 'Max Interval (Seconds)',
@@ -290,12 +247,11 @@ export const checkoutIntentFields: INodeProperties[] = [
 				resource: ['checkoutIntent'],
 				operation: ['getStatus'],
 				enablePolling: [true],
-				backoffStrategy: ['exponential'],
 			},
 		},
 		default: 60,
 		description:
-			'Maximum wait time in seconds between attempts. The interval will not exceed this value.',
+			'Maximum wait time in seconds between attempts. The interval will not exceed this value. Set this equal to Initial Interval for fixed interval polling.',
 	},
 	{
 		displayName: 'Stripe Token',

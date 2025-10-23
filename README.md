@@ -77,17 +77,9 @@ The "Get Status" operation includes automatic polling functionality to wait for 
 #### Polling Parameters
 
 - **Enable Polling**: When enabled, the node automatically retries checking the status
-- **Backoff Strategy**: Choose between fixed interval or exponential backoff (default: exponential)
 - **Max Attempts**: Number of times to check (default: 10)
-
-**For Fixed Interval Strategy:**
-
-- **Interval (Seconds)**: Time between checks (default: 5 seconds)
-
-**For Exponential Backoff Strategy (Recommended):**
-
 - **Initial Interval (Seconds)**: Starting wait time (default: 5 seconds)
-- **Max Interval (Seconds)**: Maximum wait time cap (default: 60 seconds)
+- **Max Interval (Seconds)**: Maximum wait time between attempts (default: 60 seconds)
 
 #### Checkout States
 
@@ -103,25 +95,13 @@ The "Get Status" operation includes automatic polling functionality to wait for 
 
 > **💡 Tip**: If polling times out in the `retrieving_offer` state, increase the **Max Attempts** value or handle this state explicitly in your workflow.
 
-#### Backoff Strategy
+#### Polling Behavior
 
-Choose how the node spaces out polling attempts:
+The node uses exponential backoff to space out polling attempts, giving you the flexibility to manage the [rye api rate limits](https://docs.rye.com/api-v2/developer-notes#ordering-%26-checkout) more effectively.
 
-**Exponential Backoff** (default, recommended):
+Wait time starts at `initialIntervalSeconds` and doubles with each attempt up to `maxIntervalSeconds`
 
-- Gradually increases wait time between attempts, starting at `initialIntervalSeconds` and doubling up to a maximum of `maxIntervalSeconds` 
-- Example timing: Wait 5s → 10s → 20s → 40s → 60s → 60s...
-
-**Fixed Interval**:
-
-- Waits the same amount of time between each attempt
-- Example timing: Wait 5s → 5s → 5s → 5s...
-
-**Why use exponential backoff?**
-
-- ✅ Automatically adapts to longer processing times
-- ✅ Minimizes risk of hitting rate limits
-- ✅ More efficient for workflows with varying processing times
+Example: 5s → 10s → 20s → 40s → 60s → 60s...
 
 #### Best Practice
 
@@ -179,7 +159,8 @@ Switch (based on status)
 - **Checkout Intent ID**: `{{ $json.id }}` (from Create step)
 - **Enable Polling**: `true`
 - **Max Attempts**: `10`
-- **Interval (Seconds)**: `5`
+- **Initial Interval (Seconds)**: `5`
+- **Max Interval (Seconds)**: `60`
 
 #### 4. Switch Node - Route Based on Initial Status
 
@@ -202,7 +183,8 @@ Configure switch rules:
 - **Checkout Intent ID**: `{{ $('Confirm Checkout').item.json.id }}`
 - **Enable Polling**: `true`
 - **Max Attempts**: `10`
-- **Interval (Seconds)**: `5`
+- **Initial Interval (Seconds)**: `5`
+- **Max Interval (Seconds)**: `60`
 
 #### 7. Switch Node - Route Based on Final Status
 
