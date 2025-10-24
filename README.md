@@ -41,8 +41,10 @@ To use this node, you need a Rye API account and access token.
 
 ### Prerequisites
 
-1. Sign up for a Rye API account at [rye.com](https://rye.com)
-2. Generate an API access token from your Rye dashboard
+1. Sign up for a Rye API staging account from the [developer console](https://staging.console.rye.com/register)
+2. Generate an API access token from your [Rye account](https://staging.console.rye.com/account)
+
+For more information, refer to the official [Rye Account Registration](https://docs.rye.com/api-v2/account-registration) documentation.
 
 ### Setting up credentials in n8n
 
@@ -51,7 +53,7 @@ To use this node, you need a Rye API account and access token.
 3. Enter your **API URL**:
    - Staging: `https://staging.api.rye.com/api/v1`
    - Production: `https://api.rye.com/api/v1`
-4. Enter your **Access Token**
+4. Enter your **Access Token** (without the HTTP authentication scheme prefix, e.g., "Basic")
 5. Click **Save**
 
 ## Compatibility
@@ -77,7 +79,7 @@ The "Get Status" operation includes automatic polling functionality to wait for 
 #### Polling Parameters
 
 - **Enable Polling**: When enabled, the node automatically retries checking the status
-- **Max Attempts**: Number of times to check (default: 10)
+- **Max Attempts**: Maximum number of times to check (default: 20). Note: Some merchants may take up to 45 minutes to process.
 - **Initial Interval (Seconds)**: Starting wait time (default: 5 seconds)
 - **Max Interval (Seconds)**: Maximum wait time between attempts (default: 60 seconds)
 
@@ -97,11 +99,13 @@ The "Get Status" operation includes automatic polling functionality to wait for 
 
 #### Polling Behavior
 
-The node uses exponential backoff to space out polling attempts, giving you the flexibility to manage the [rye api rate limits](https://docs.rye.com/api-v2/developer-notes#ordering-%26-checkout) more effectively.
+The "Get Status" node uses exponential backoff to space out polling attempts, giving you flexibility to manage the [Rye API rate limits](https://docs.rye.com/api-v2/developer-notes#ordering-%26-checkout) more effectively.
 
 Wait time starts at `initialIntervalSeconds` and doubles with each attempt up to `maxIntervalSeconds`
 
-Example: 5s → 10s → 20s → 40s → 60s → 60s...
+Example timing: 5s → 10s → 20s → 40s → 60s → 60s...
+
+Note: using the default parameter values (`maxAttempts = 20`, `initialIntervalSeconds = 5`, `maxIntervalSeconds = 60`), the node will poll for up to ~17 minutes
 
 #### Best Practice
 
@@ -158,7 +162,7 @@ Switch (based on status)
 - **Operation**: Get Status
 - **Checkout Intent ID**: `{{ $json.id }}` (from Create step)
 - **Enable Polling**: `true`
-- **Max Attempts**: `10`
+- **Max Attempts**: `20`
 - **Initial Interval (Seconds)**: `5`
 - **Max Interval (Seconds)**: `60`
 
@@ -166,8 +170,8 @@ Switch (based on status)
 
 Configure switch rules:
 
-- **Rule 1**: `{{ $json.status === "awaiting_confirmation" }}` → Continue to Confirm
-- **Rule 2**: `{{ $json.status === "failed" }}` → Error handling
+- **Rule 1**: `{{ $json.state === "awaiting_confirmation" }}` → Continue to Confirm
+- **Rule 2**: `{{ $json.state === "failed" }}` → Error handling
 
 #### 5. Confirm Checkout (if awaiting_confirmation)
 
@@ -182,7 +186,7 @@ Configure switch rules:
 - **Operation**: Get Status
 - **Checkout Intent ID**: `{{ $('Confirm Checkout').item.json.id }}`
 - **Enable Polling**: `true`
-- **Max Attempts**: `10`
+- **Max Attempts**: `20`
 - **Initial Interval (Seconds)**: `5`
 - **Max Interval (Seconds)**: `60`
 
@@ -190,8 +194,8 @@ Configure switch rules:
 
 Configure switch rules:
 
-- **Rule 1**: `{{ $json.status === "completed" }}` → Success handling
-- **Rule 2**: `{{ $json.status === "failed" }}` → Error handling
+- **Rule 1**: `{{ $json.state === "completed" }}` → Success handling
+- **Rule 2**: `{{ $json.state === "failed" }}` → Error handling
 
 ## Resources
 
@@ -204,7 +208,6 @@ Configure switch rules:
 For issues or questions:
 
 - **Node Issues**: [GitHub Issues](https://github.com/rye-com/n8n-nodes-rye/issues)
-- **Rye API Support**: [Rye Support](https://rye.com/support)
 - **n8n Community**: [n8n Forum](https://community.n8n.io/)
 
 ## License
