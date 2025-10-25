@@ -115,7 +115,7 @@ export class Rye implements INodeType {
 						);
 
 						returnData.push({ json: responseData });
-					} else if (operation === 'getStatus') {
+					} else if (operation === 'getState') {
 						const checkoutIntentId = this.getNodeParameter('checkoutIntentId', i) as string;
 						const enablePolling = this.getNodeParameter('enablePolling', i) as boolean;
 

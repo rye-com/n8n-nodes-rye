@@ -25,10 +25,10 @@ export const checkoutIntentOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get Status',
-				value: 'getStatus',
-				description: 'Get the status of a checkout intent',
-				action: 'Get checkout intent status',
+				name: 'Get State',
+				value: 'getState',
+				description: 'Get the state of a checkout intent',
+				action: 'Get checkout intent state',
 			},
 			{
 				name: 'Confirm',
@@ -49,11 +49,11 @@ export const checkoutIntentOperations: INodeProperties[] = [
 export const checkoutIntentHints: NodeHint[] = [
 	{
 		message:
-			'Tip: When using this node with polling enabled, add a Switch or IF node after this node to route your workflow based on the final checkout status (retrieving_offer, awaiting_confirmation, completed, failed).',
+			'Tip: When using this node with polling enabled, add a Switch or IF node after this node to route your workflow based on the final checkout state (awaiting_confirmation, completed, failed).',
 		whenToDisplay: 'always',
 		location: 'outputPane',
 		displayCondition:
-			'={{ $parameter["operation"] === "getStatus" && $parameter["enablePolling"] === true }}',
+			'={{ $parameter["operation"] === "getState" && $parameter["enablePolling"] === true }}',
 	},
 ];
 
@@ -186,7 +186,7 @@ export const checkoutIntentFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['checkoutIntent'],
-				operation: ['getStatus', 'confirm'],
+				operation: ['getState', 'confirm'],
 			},
 		},
 		default: '',
@@ -201,7 +201,7 @@ export const checkoutIntentFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['checkoutIntent'],
-				operation: ['getStatus'],
+				operation: ['getState'],
 			},
 		},
 		default: true,
@@ -215,13 +215,13 @@ export const checkoutIntentFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['checkoutIntent'],
-				operation: ['getStatus'],
+				operation: ['getState'],
 				enablePolling: [true],
 			},
 		},
 		default: 20,
 		description:
-			'Maximum number of times to check the status before returning the current state. Polling stops automatically when a terminal state is reached (awaiting_confirmation, completed, or failed). Note: it can take up to 45 minutes to process the checkout intent - increase this value if needed. <a href="https://docs.rye.com/api-v2/checkout-intent-lifecycle#notes" target="_blank">Learn more</a>',
+			'Maximum number of times to check the state before returning the current state. Polling stops automatically when a terminal state is reached (awaiting_confirmation, completed, or failed). Note: it can take up to 45 minutes to process the checkout intent - increase this value if needed. <a href="https://docs.rye.com/api-v2/checkout-intent-lifecycle#notes" target="_blank">Learn more</a>',
 	},
 	{
 		displayName: 'Initial Interval (Seconds)',
@@ -230,7 +230,7 @@ export const checkoutIntentFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['checkoutIntent'],
-				operation: ['getStatus'],
+				operation: ['getState'],
 				enablePolling: [true],
 			},
 		},
@@ -245,7 +245,7 @@ export const checkoutIntentFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['checkoutIntent'],
-				operation: ['getStatus'],
+				operation: ['getState'],
 				enablePolling: [true],
 			},
 		},

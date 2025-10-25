@@ -28,7 +28,7 @@ This node provides the following operations:
 ### Checkout Intent
 
 - **Create**: Submit a new checkout with a product URL and buyer information
-- **Get Status**: Check the status of a checkout intent (with optional automatic polling)
+- **Get State**: Check the state of a checkout intent (with optional automatic polling)
 - **Confirm**: Confirm a checkout intent with a payment method
 
 ### Brand
@@ -68,17 +68,17 @@ For more information, refer to the official [Rye Account Registration](https://d
 The typical checkout flow involves these steps:
 
 1. **Create a Checkout Intent** with a product URL and buyer details
-2. **Poll for Status** until the checkout reaches `awaiting_confirmation` state
+2. **Poll for State** until the checkout reaches `awaiting_confirmation` state
 3. **Confirm the Checkout** with a payment token
-4. **Poll for Status** again until the checkout reaches `completed` state
+4. **Poll for State** again until the checkout reaches `completed` state
 
-### Using the Get Status Operation with Polling
+### Using the Get State Operation with Polling
 
-The "Get Status" operation includes automatic polling functionality to wait for the checkout to reach a terminal state.
+The "Get State" operation includes automatic polling functionality to wait for the checkout to reach a terminal state.
 
 #### Polling Parameters
 
-- **Enable Polling**: When enabled, the node automatically retries checking the status
+- **Enable Polling**: When enabled, the node automatically retries checking the state
 - **Max Attempts**: Maximum number of times to check (default: 20). Note: Some merchants may take up to 45 minutes to process.
 - **Initial Interval (Seconds)**: Starting wait time (default: 5 seconds)
 - **Max Interval (Seconds)**: Maximum wait time between attempts (default: 60 seconds)
@@ -99,7 +99,7 @@ The "Get Status" operation includes automatic polling functionality to wait for 
 
 #### Polling Behavior
 
-The "Get Status" node uses exponential backoff to space out polling attempts, giving you flexibility to manage the [Rye API rate limits](https://docs.rye.com/api-v2/developer-notes#ordering-%26-checkout) more effectively.
+The "Get State" node uses exponential backoff to space out polling attempts, giving you flexibility to manage the [Rye API rate limits](https://docs.rye.com/api-v2/developer-notes#ordering-%26-checkout) more effectively.
 
 Wait time starts at `initialIntervalSeconds` and doubles with each attempt up to `maxIntervalSeconds`
 
@@ -109,7 +109,7 @@ Note: using the default parameter values (`maxAttempts = 20`, `initialIntervalSe
 
 #### Best Practice
 
-After polling completes, use a **Switch** or **IF** node to route your workflow based on the final status.
+After polling completes, use a **Switch** or **IF** node to route your workflow based on the final state.
 
 ### Address Validation
 
@@ -117,7 +117,7 @@ After polling completes, use a **Switch** or **IF** node to route your workflow 
 
 ## Example Workflows
 
-### Complete Checkout with Status Routing
+### Complete Checkout with State Routing
 
 ```
 Manual Trigger
@@ -126,14 +126,14 @@ Verify Brand Support (Rye)
   ↓
 Create Checkout Intent (Rye)
   ↓
-Get Status with Polling (Rye)
+Get State with Polling (Rye)
   ↓
-Switch (based on status)
+Switch (based on state)
   ├─ awaiting_confirmation → Confirm Checkout (Rye)
   │                            ↓
-  │                         Get Status with Polling (Rye)
+  │                         Get State with Polling (Rye)
   │                            ↓
-  │                         Switch (based on final status)
+  │                         Switch (based on final state)
   │                            ├─ completed → Success notification
   │                            └─ failed → Error notification
   │
@@ -156,17 +156,17 @@ Switch (based on status)
 - **Buyer Email**: Customer's email address
 - **Shipping Address**: Complete US address details
 
-#### 3. Get Status (with Polling) - First Check
+#### 3. Get State (with Polling) - First Check
 
 - **Resource**: Checkout Intent
-- **Operation**: Get Status
+- **Operation**: Get State
 - **Checkout Intent ID**: `{{ $json.id }}` (from Create step)
 - **Enable Polling**: `true`
 - **Max Attempts**: `20`
 - **Initial Interval (Seconds)**: `5`
 - **Max Interval (Seconds)**: `60`
 
-#### 4. Switch Node - Route Based on Initial Status
+#### 4. Switch Node - Route Based on Initial State
 
 Configure switch rules:
 
@@ -177,20 +177,20 @@ Configure switch rules:
 
 - **Resource**: Checkout Intent
 - **Operation**: Confirm
-- **Checkout Intent ID**: `{{ $('Get Status').item.json.id }}`
+- **Checkout Intent ID**: `{{ $('Get State').item.json.id }}`
 - **Payment Token**: Payment method token from your payment processor (e.g., Stripe)
 
-#### 6. Get Status (with Polling) - Final Check
+#### 6. Get State (with Polling) - Final Check
 
 - **Resource**: Checkout Intent
-- **Operation**: Get Status
+- **Operation**: Get State
 - **Checkout Intent ID**: `{{ $('Confirm Checkout').item.json.id }}`
 - **Enable Polling**: `true`
 - **Max Attempts**: `20`
 - **Initial Interval (Seconds)**: `5`
 - **Max Interval (Seconds)**: `60`
 
-#### 7. Switch Node - Route Based on Final Status
+#### 7. Switch Node - Route Based on Final State
 
 Configure switch rules:
 
