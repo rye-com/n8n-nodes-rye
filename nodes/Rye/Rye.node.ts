@@ -114,7 +114,7 @@ export class Rye implements INodeType {
 							},
 						);
 
-						returnData.push({ json: responseData });
+						returnData.push({ json: responseData, pairedItem: { item: i } });
 					} else if (operation === 'getState') {
 						const checkoutIntentId = this.getNodeParameter('checkoutIntentId', i) as string;
 						const enablePolling = this.getNodeParameter('enablePolling', i) as boolean;
@@ -128,7 +128,7 @@ export class Rye implements INodeType {
 						if (!enablePolling) {
 							const responseData = await fetchCheckoutIntent();
 
-							returnData.push({ json: responseData });
+							returnData.push({ json: responseData, pairedItem: { item: i } });
 						} else {
 							const maxAttempts = this.getNodeParameter('maxAttempts', i) as number;
 							const initialIntervalSeconds = this.getNodeParameter(
@@ -161,7 +161,7 @@ export class Rye implements INodeType {
 								}
 							}
 
-							returnData.push({ json: responseData ?? {} });
+							returnData.push({ json: responseData ?? {}, pairedItem: { item: i } });
 						}
 					} else if (operation === 'confirm') {
 						const checkoutIntentId = this.getNodeParameter('checkoutIntentId', i) as string;
@@ -184,7 +184,7 @@ export class Rye implements INodeType {
 							},
 						);
 
-						returnData.push({ json: responseData });
+						returnData.push({ json: responseData, pairedItem: { item: i } });
 					}
 				} else if (resource === 'brand') {
 					if (operation === 'verifyBrandSupport') {
@@ -199,7 +199,7 @@ export class Rye implements INodeType {
 							},
 						);
 
-						returnData.push({ json: responseData });
+						returnData.push({ json: responseData, pairedItem: { item: i } });
 					}
 				}
 			} catch (error) {
