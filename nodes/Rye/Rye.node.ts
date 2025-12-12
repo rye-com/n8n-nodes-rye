@@ -40,13 +40,6 @@ export class Rye implements INodeType {
 			},
 		],
 		hints: [...checkoutIntentHints],
-		requestDefaults: {
-			baseURL: '={{$credentials.apiUrl}}',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
-		},
 		properties: [
 			{
 				displayName: 'Resource',

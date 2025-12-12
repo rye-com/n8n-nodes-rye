@@ -17,11 +17,6 @@ export const brandOperations: INodeProperties[] = [
 				value: 'verifyBrandSupport',
 				description: 'Check if a brand/domain is supported',
 				action: 'Verify brand support',
-				routing: {
-					request: {
-						method: 'GET',
-					},
-				},
 			},
 		],
 		default: 'verifyBrandSupport',
