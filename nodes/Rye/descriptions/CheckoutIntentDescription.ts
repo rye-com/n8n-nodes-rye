@@ -17,12 +17,6 @@ export const checkoutIntentOperations: INodeProperties[] = [
 				value: 'create',
 				description: 'Create a new checkout intent',
 				action: 'Create a checkout intent',
-				routing: {
-					request: {
-						method: 'POST',
-						url: '/checkout-intents',
-					},
-				},
 			},
 			{
 				name: 'Get State',
@@ -35,11 +29,6 @@ export const checkoutIntentOperations: INodeProperties[] = [
 				value: 'confirm',
 				description: 'Confirm a checkout intent with payment',
 				action: 'Confirm a checkout intent',
-				routing: {
-					request: {
-						method: 'POST',
-					},
-				},
 			},
 		],
 		default: 'create',
